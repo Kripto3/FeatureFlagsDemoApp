@@ -1,0 +1,129 @@
+﻿@page "/funciones"
+@inject IJSRuntime JSRuntime
+@inject HttpClient Http
+@using System.Text.Json;
+
+<div class="container-fluid p-4">
+    <div class="row g-4">
+        <!-- Image Section -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Image Gallery</h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-3 overflow-auto p-2">
+                        @foreach (var imageUrl in ImageUrls)
+                        {
+                            <img src="@imageUrl" class="img-thumbnail" style="width: 200px; height: 150px; object-fit: cover;" alt="Gallery image" />
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons Section -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" @onclick="HandlePrimaryAction">Primary Action</button>
+                        <button class="btn btn-secondary" @onclick="HandleSecondaryAction">Secondary Action</button>
+                        <button class="btn btn-success" @onclick="HandleSuccessAction">Success Action</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Analytics</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private List<string> ImageUrls = new();
+
+    private List<ChartData> chartData = new()
+    {
+        new ChartData { Month = "Jan", Sales = 65, Revenue = 1200 },
+        new ChartData { Month = "Feb", Sales = 85, Revenue = 1500 },
+        new ChartData { Month = "Mar", Sales = 75, Revenue = 1300 },
+        new ChartData { Month = "Apr", Sales = 95, Revenue = 1700 }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadImagesAsync();
+    }
+
+    private async Task LoadImagesAsync()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            var response = await Http.GetStringAsync("https://dog.ceo/api/breeds/image/random");
+            var imageUrl = ExtractUrl(response);
+            ImageUrls.Add(imageUrl);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CreateChartAsync();
+        }
+    }
+
+    public string ExtractUrl(string jsonResponse)
+    {
+        try
+        {
+            // Deserializar el JSON en un objeto dinámico
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var responseObject = JsonSerializer.Deserialize<DogResponse>(jsonResponse, options);
+
+            // Retornar la URL si existe
+            return responseObject?.Message ?? "URL not found";
+        }
+        catch (Exception ex)
+        {
+            // Manejo de errores
+            return $"Error parsing JSON: {ex.Message}";
+        }
+    }
+
+
+
+
+    private async Task CreateChartAsync()
+    {
+        await JSRuntime.InvokeVoidAsync("createChart",
+            chartData.Select(x => x.Month).ToArray(),
+            chartData.Select(x => x.Sales).ToArray(),
+            chartData.Select(x => x.Revenue).ToArray());
+    }
+
+    private void HandlePrimaryAction() { }
+    private void HandleSecondaryAction() { }
+    private void HandleSuccessAction() { }
+
+    public class ChartData
+    {
+        public string Month { get; set; }
+        public double Sales { get; set; }
+        public double Revenue { get; set; }
+    }
+}
