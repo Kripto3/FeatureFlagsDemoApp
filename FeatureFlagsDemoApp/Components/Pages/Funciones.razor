@@ -9,15 +9,24 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Image Gallery</h3>
+                    <h3 class="card-title">🐾 Galería de perritos</h3>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex gap-3 overflow-auto p-2">
-                        @foreach (var imageUrl in ImageUrls)
-                        {
-                            <img src="@imageUrl" class="img-thumbnail" style="width: 200px; height: 150px; object-fit: cover;" alt="Gallery image" />
-                        }
-                    </div>
+
+                    @if (_loading)
+                    {
+
+                        <Skeleton Loading="@_loading" Active Avatar>
+                        </Skeleton>
+
+                    }else{
+                        <div class="d-flex gap-3 overflow-auto p-2">
+                            @foreach (var imageUrl in _imageUrls)
+                            {
+                                <img src="@imageUrl" class="img-thumbnail" style="width: 200px; height: 150px; object-fit: cover;" alt="Gallery image" />
+                            }
+                        </div>
+                    } 
                 </div>
             </div>
         </div>
@@ -26,13 +35,15 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Actions</h3>
+                    <h3 class="card-title">Acciones</h3>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <button class="btn btn-primary" @onclick="HandlePrimaryAction">Primary Action</button>
-                        <button class="btn btn-secondary" @onclick="HandleSecondaryAction">Secondary Action</button>
-                        <button class="btn btn-success" @onclick="HandleSuccessAction">Success Action</button>
+                        <button class="btn btn-primary" title="cambiar perritos" @onclick="HandlePrimaryAction"> 
+                            🐶 Cambiar perritos
+                        </button>
+                        <button class="btn btn-secondary" @onclick="HandleSecondaryAction">🛠️ Proximamente</button>
+                        <button class="btn btn-secondary" @onclick="HandleSuccessAction">🛠️ Próximamente</button>
                     </div>
                 </div>
             </div>
@@ -54,9 +65,9 @@
 
 @code {
 
-    private List<string> ImageUrls = new();
-
-    private List<ChartData> chartData = new()
+    bool _loading = false;
+    List<string> _imageUrls = new();
+    List<ChartData> _chartData = new()
     {
         new ChartData { Month = "Jan", Sales = 65, Revenue = 1200 },
         new ChartData { Month = "Feb", Sales = 85, Revenue = 1500 },
@@ -66,17 +77,27 @@
 
     protected override async Task OnInitializedAsync()
     {
+
         await LoadImagesAsync();
+
     }
 
     private async Task LoadImagesAsync()
     {
-        for (int i = 0; i < 4; i++)
+        _loading = true;
+
+        _imageUrls = new();
+
+        for (int i = 0; i < 5; i++)
         {
             var response = await Http.GetStringAsync("https://dog.ceo/api/breeds/image/random");
             var imageUrl = ExtractUrl(response);
-            ImageUrls.Add(imageUrl);
+            _imageUrls.Add(imageUrl);
         }
+
+        _loading = false;
+
+        StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -111,12 +132,12 @@
     private async Task CreateChartAsync()
     {
         await JSRuntime.InvokeVoidAsync("createChart",
-            chartData.Select(x => x.Month).ToArray(),
-            chartData.Select(x => x.Sales).ToArray(),
-            chartData.Select(x => x.Revenue).ToArray());
+            _chartData.Select(x => x.Month).ToArray(),
+            _chartData.Select(x => x.Sales).ToArray(),
+            _chartData.Select(x => x.Revenue).ToArray());
     }
 
-    private void HandlePrimaryAction() { }
+    private async void HandlePrimaryAction() => await LoadImagesAsync();
     private void HandleSecondaryAction() { }
     private void HandleSuccessAction() { }
 
