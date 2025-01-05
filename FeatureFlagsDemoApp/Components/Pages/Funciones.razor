@@ -1,7 +1,10 @@
 ﻿@page "/funciones"
 @inject IJSRuntime JSRuntime
 @inject HttpClient Http
+@inject IFeatureManager FeatureManager
+
 @using System.Text.Json;
+
 
 <div class="container-fluid p-4">
     <div class="row g-4">
@@ -42,8 +45,11 @@
                         <button class="btn btn-primary" title="cambiar perritos" @onclick="HandlePrimaryAction"> 
                             🐶 Cambiar perritos
                         </button>
-                        <button class="btn btn-secondary" @onclick="HandleSecondaryAction">🛠️ Proximamente</button>
-                        <button class="btn btn-secondary" @onclick="HandleSuccessAction">🛠️ Próximamente</button>
+                        @if (isFeatureAEnabled)
+                        {
+                            <button class="btn btn-secondary" @onclick="HandleSecondaryAction">🛠️ Proximamente</button>
+                            <button class="btn btn-secondary" @onclick="HandleSuccessAction">🛠️ Próximamente</button>
+                        }
                     </div>
                 </div>
             </div>
@@ -75,9 +81,11 @@
         new ChartData { Month = "Apr", Sales = 95, Revenue = 1700 }
     };
 
+    private bool isFeatureAEnabled;
+
     protected override async Task OnInitializedAsync()
     {
-
+        isFeatureAEnabled = await FeatureManager.IsEnabledAsync("FeatureA");
         await LoadImagesAsync();
 
     }

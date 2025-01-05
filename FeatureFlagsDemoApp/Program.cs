@@ -12,7 +12,19 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddRadzenComponents();
 builder.Services.AddHttpClient();
 
+#region Azure App Configuration
+    builder.Configuration.AddAzureAppConfiguration(options =>
+        options.Connect(
+            builder.Configuration["ConnectionStrings:AzureAppConfig"])
+            .UseFeatureFlags());
+
+    builder.Services.AddAzureAppConfiguration();
+#endregion
+
 var app = builder.Build();
+
+// Use Azure App Configuration
+app.UseAzureAppConfiguration();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -22,6 +34,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     
 }
+
 
 app.UseHttpsRedirection();
 
